@@ -1,6 +1,7 @@
 import { Link, router } from "expo-router"
 import * as React from "react"
 import { View } from "react-native"
+import { AlertContext, useAlertContext } from "~/components/AlertSystem"
 import { Button } from "~/components/ui/button"
 import { Text } from "~/components/ui/text"
 import { connectToWebSocket } from "~/utils/clientSocket"
@@ -8,16 +9,18 @@ import { connectToWebSocket } from "~/utils/clientSocket"
 export default function Screen() {
   const [isConnected, setIsConnected] = React.useState(false)
   const [isConnecting, setIsConnecting] = React.useState(false)
+  const alertContext = useAlertContext()
 
   React.useEffect(() => {
     if (isConnecting) {
+      setIsConnecting(false)
       router.navigate("/connected")
     }
   }, [isConnected])
 
   function handleConnect() {
     setIsConnecting(true)
-    connectToWebSocket(setIsConnected)
+    connectToWebSocket(setIsConnected, alertContext)
   }
 
   return (

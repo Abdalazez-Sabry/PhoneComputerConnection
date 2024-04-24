@@ -1,10 +1,14 @@
+import { StatusBar } from "expo-status-bar"
 import * as React from "react"
-import { View } from "react-native"
+import { Alert, View } from "react-native"
+import { AlertProvider, useAlertContext } from "~/components/AlertSystem"
 import { Button } from "~/components/ui/button"
 import { Text } from "~/components/ui/text"
 import { copyClipboard, sendPing } from "~/utils/clientSocket"
 
-export default function Screen() {
+export default function Connected() {
+  const alertContext = useAlertContext()
+
   function handleCopy() {
     copyClipboard()
   }
