@@ -4,6 +4,8 @@ import * as Clipboard from 'expo-clipboard';
 import { IAlertContext } from "~/components/AlertSystem";
 import { DocumentPickerAsset } from "expo-document-picker";
 
+import { getBatteryLevelAsync } from 'expo-battery';
+
 const PORT = "9500"
 const URL = `http://192.168.1.12:${PORT}`
 
@@ -35,6 +37,12 @@ export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertC
         const clipboard = await Clipboard.getStringAsync()
         console.log(`Sending '${clipboard}' to the server`)
         response(clipboard)
+    })
+
+    socket.on("request:phoneBatteryLevel", async (callback) => {
+        const batteryLevel = await getBatteryLevelAsync();
+        console.log(batteryLevel)
+        callback(batteryLevel)
     })
 }
 

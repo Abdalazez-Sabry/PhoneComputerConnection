@@ -7,7 +7,7 @@ const URL = `http://localhost:${import.meta.env.VITE_PORT}`
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 let alertContext: IAlertContext | null;
 
-export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertContext) {
+export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertContext, setBatterLevel: Function) {
     socket = io(URL);
     alertContext = alertContx
 
@@ -28,6 +28,10 @@ export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertC
             title: "Recived Message",
             description: `message: ${message}`
         })
+    })
+
+    socket.on("response:phoneBatteryLevel", (batteryLevel) => {
+        setBatterLevel(batteryLevel)
     })
 }
 

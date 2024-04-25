@@ -35,11 +35,23 @@ export function createSocketServer() {
                     io.sockets.sockets.get(computerId)?.disconnect()
                 }
                 computerId = socket.id
+                if (phoneId) {
+                    io.sockets.sockets.get(phoneId)?.emit("request:phoneBatteryLevel", (batteryLevel) => {
+                        if (computerId) {
+                            socket.emit("response:phoneBatteryLevel", batteryLevel)
+                        }
+                    })
+                }
             } else if (type === "phone") {
                 if (phoneId != null) {
                     io.sockets.sockets.get(phoneId)?.disconnect()
                 }
                 phoneId = socket.id
+                socket.emit("request:phoneBatteryLevel", (batteryLevel) => {
+                    if (computerId) {
+                        io.sockets.sockets.get(computerId)?.emit("response:phoneBatteryLevel", batteryLevel)
+                    }
+                })
             }
             console.log(`A ${type} connection`)
         })
@@ -99,7 +111,6 @@ function initHttp(expressServer: express.Express) {
     expressServer.post('/upload', function (req, res) {
         let file: fileUpload.UploadedFile;
         let uploadPath;
-
         if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).send('No files were uploaded.');
         }

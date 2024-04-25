@@ -4,9 +4,8 @@ interface SharedEvents {
     "message": (message: string) => void
     "request:phoneClipboard": (ack: (clipboard: string) => void) => void
     "request:computerClipboard": (ack: (clipboard: string) => void) => void
-    "fileToPhone:init": (filename: string) => void
-    "fileToPhone:chunk": (chunk: Buffer | ArrayBuffer, filename: string, ack: (status: "failed" | "success") => void) => void
-    "fileToPhone:end": (fileName: string) => void
+    "request:phoneBatteryLevel": (ack: (batteryLevel: number) => void) => void
+    "response:phoneBatteryLevel": (batteryLevel: number) => void
 }
 
 export interface ServerToClientEvents extends SharedEvents {

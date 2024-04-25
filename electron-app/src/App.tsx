@@ -8,10 +8,12 @@ import {
   sendPing,
 } from "@/utils/clientSocket"
 import { AlertContext, useAlertContext } from "./components/AlertSystem"
+import BatteryGauge from "react-battery-gauge"
 
 function App() {
   const [isConnected, setIsConnected] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const alertContext = useAlertContext()
@@ -22,7 +24,7 @@ function App() {
 
   function handleConnect() {
     setIsConnecting(true)
-    connectToWebSocket(setIsConnected, alertContext)
+    connectToWebSocket(setIsConnected, alertContext, setBatteryLevel)
   }
 
   function handleCopy() {
@@ -50,9 +52,13 @@ function App() {
       {isConnected ? (
         <>
           <div className="w-full bg-popover flex justify-center p-5">
-            <h1>Here will be the phone stats</h1>
+            {batteryLevel !== null ? (
+              <BatteryGauge size={75} value={batteryLevel * 100} />
+            ) : (
+              <h1>Here will be the phone stats</h1>
+            )}
           </div>
-          <div className="h-full flex flex-col items-center justify-center ">
+          <div className="h-full flex flex-col items-center justify-center gap-5 ">
             <div className=" flex gap-4 items-center justify-center ">
               <Button variant="outline" onClick={handleSendFileButton}>
                 Send File
@@ -62,7 +68,6 @@ function App() {
               </Button>
             </div>
             <div className=" flex gap-4 items-center justify-center">
-              <Button variant="outline">Get Phone's Notifications</Button>
               <Button variant="outline" onClick={handlePingMessage}>
                 {" "}
                 Send Ping Message{" "}
