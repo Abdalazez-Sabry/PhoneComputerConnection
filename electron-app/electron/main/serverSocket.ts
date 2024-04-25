@@ -1,23 +1,29 @@
-import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { ClientToServerEvents, ServerToClientEvents } from "../../../shared/socket.ioTypes"
 import clipboard from "clipboardy";
-import { writeFile, appendFile, writeFileSync, appendFileSync, existsSync, promises } from "fs";
-import path from "path"
+import express from "express"
+import http from "http"
+import fileUpload from 'express-fileupload'
+import cors from "cors"
+
 
 export function createSocketServer() {
     let phoneId: string | null = null;
     let computerId: string | null = null;
 
-    const httpServer = createServer();
+    const expressServer = express()
+    const httpServer = http.createServer(expressServer);
+
+    initHttp(expressServer)
+
     const io = new Server<
         ClientToServerEvents,
         ServerToClientEvents
     >(httpServer, {
-        // const io = new Server(httpServer, {
         cors: {
             origin: "*"
-        }
+        },
+        maxHttpBufferSize: 1e12
     });
 
     io.on("connection", (socket) => {
@@ -73,30 +79,6 @@ export function createSocketServer() {
             response(clipboardRes)
         })
 
-        socket.on("fileToPhone:init", (filename) => {
-            console.log("creating file: ", filename)
-            writeFileSync(`../filesharing/${filename}`, "");
-        })
-
-        const chunkQueue = []
-
-        socket.on("fileToPhone:chunk", (chunk, filename) => {
-            // console.log("appending a packet")
-            // appendFileSync(`../filesharing/${filename}`, chunk as Buffer);
-            packetSent += 1
-            if (packetSent % 100 == 0) {
-                console.log(`Sent ${packetSent} packets`)
-            }
-            writeQueue.push({ chunk: chunk as Buffer, filePath: `../filesharing/${filename}` }); // Add chunk to the write queue
-            processWriteQueue();
-
-        })
-
-        socket.on("fileToPhone:end", (filename) => {
-            console.log("file created, i think:", filename)
-            console.log(`retries: ${retryN}, errors: ${errorN}`)
-            console.log(`Sent ${packetSent} packets`)
-        })
 
     });
 
@@ -105,45 +87,36 @@ export function createSocketServer() {
     });
 }
 
-let writingInProgress = false
-let writeQueue: { chunk: Buffer, filePath: string }[] = [];
-let retryN = 0
-let errorN = 0
-let packetSent = 0
+function initHttp(expressServer: express.Express) {
+    expressServer.use(fileUpload());
+    expressServer.use(cors());
 
-async function processWriteQueue() {
-    // If a write operation is already in progress or the write queue is empty, do nothing
-    if (writingInProgress || writeQueue.length === 0) {
-        return;
-    }
+    expressServer.get("/", (req, res) => {
+        console.log("the server is working")
+        return res.send("every thing is ok")
+    })
 
-    writingInProgress = true; // Mark that a write operation is in progress
+    expressServer.post('/upload', function (req, res) {
+        let file: fileUpload.UploadedFile;
+        let uploadPath;
 
-    const { chunk, filePath } = writeQueue[0]!; // Dequeue the next chunk to write
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.status(400).send('No files were uploaded.');
+        }
 
-    // Retry logic
-    let retries = 5; // Number of retries
-    let success = false;
+        file = req.files.file as fileUpload.UploadedFile;
+        if (!file) {
+            console.log("doesn't exsist")
+            return;
+        }
+        uploadPath = `../filesharing/${file.name}`;
 
-    // while (retries > 0 && !success) {
-    try {
-        // Append chunk to file
-        await promises.appendFile(filePath, chunk);
-        success = true; // Mark the operation as successful
-    } catch (error) {
-        console.warn(`Error appending chunk to file (${filePath}), retrying...`);
-        retryN += 1
-        retries--; // Decrement the number of retries
-        // await new Promise(resolve => setTimeout(resolve, 100)); // Wait for a short time before retrying
-    }
-    // }
+        file.mv(uploadPath, function (err: Error) {
+            if (err) {
+                return res.status(500).send(err);
+            }
 
-    if (success) {
-        writeQueue.shift()
-    } else {
-        errorN += 1
-    }
-
-    writingInProgress = false; // Mark that the write operation is complete
-    processWriteQueue(); // Process the next chunk in the write queue
+            res.send('File uploaded!');
+        });
+    });
 }

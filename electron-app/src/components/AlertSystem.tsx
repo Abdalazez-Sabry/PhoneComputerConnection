@@ -4,7 +4,7 @@ import { createContext, useContext, useState, PropsWithChildren } from "react"
 
 export interface IAlert {
   title: String
-  description: string
+  description?: string
   timeout?: number
   handleDismiss?: Function
 }

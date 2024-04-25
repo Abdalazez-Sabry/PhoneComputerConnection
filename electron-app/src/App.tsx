@@ -41,7 +41,6 @@ function App() {
     if (!file) {
       return
     }
-
     console.log("change", file.name)
     sendFile(file)
   }

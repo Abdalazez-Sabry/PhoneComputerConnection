@@ -4,11 +4,10 @@ import { Alert, View } from "react-native"
 import { AlertProvider, useAlertContext } from "~/components/AlertSystem"
 import { Button } from "~/components/ui/button"
 import { Text } from "~/components/ui/text"
-import { copyClipboard, sendPing } from "~/utils/clientSocket"
+import { copyClipboard, sendPing, sendFile } from "~/utils/clientSocket"
+import * as DocumentPicker from "expo-document-picker"
 
 export default function Connected() {
-  const alertContext = useAlertContext()
-
   function handleCopy() {
     copyClipboard()
   }
@@ -17,10 +16,30 @@ export default function Connected() {
     sendPing("sending hello from phone ")
   }
 
+  async function handleSendFile() {
+    const result = await DocumentPicker.getDocumentAsync({
+      multiple: true,
+      copyToCacheDirectory: true,
+    })
+
+    const assets = result.assets
+    if (!assets) {
+      return
+    }
+
+    for (let file of assets) {
+      await sendFile(file)
+    }
+  }
+
   return (
     <View className="flex-1 justify-center items-center gap-5 p-6 bg-secondary/40">
-      <Button variant="outline" className="bg-secondary/10">
-        <Text>Upload a File</Text>
+      <Button
+        variant="outline"
+        onPress={handleSendFile}
+        className="bg-secondary/10"
+      >
+        <Text>Send File</Text>
       </Button>
 
       <Button

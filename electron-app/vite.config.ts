@@ -31,6 +31,7 @@ export default defineConfig(({ command }) => {
             } else {
               args.startup()
             }
+
           },
           vite: {
             build: {

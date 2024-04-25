@@ -2,11 +2,12 @@ import { Socket, io } from "socket.io-client";
 import { ClientToServerEvents, ServerToClientEvents } from "../../../shared/socket.ioTypes"
 import { AlertContext, IAlertContext, useAlertContext } from "@/components/AlertSystem";
 
+const URL = `http://localhost:${import.meta.env.VITE_PORT}`
+
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 let alertContext: IAlertContext | null;
 
 export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertContext) {
-    const URL = `http://localhost:${import.meta.env.VITE_PORT}`
     socket = io(URL);
     alertContext = alertContx
 
@@ -55,46 +56,21 @@ export async function copyClipboard() {
 }
 
 export async function sendFile(file: File) {
-    const CHUNK_SIZE = 100000
-    const MAX_CONCURRENT_CHUNKS = 5
-
-    if (socket === null) {
-        console.log("can't send file")
-        return;
+    const formData = new FormData();
+    formData.append('file', file);
+    const status = await fetch(`${URL}/upload`, {
+        body: formData,
+        method: "POST",
+    })
+    if (status.ok) {
+        alertContext?.add({
+            "title": "File sent successfully"
+        })
+    } else {
+        alertContext?.add({
+            "title": "An error occurred trying to send file "
+        })
     }
-
-    const fileBuffer = await file.arrayBuffer()
-    const length = fileBuffer.byteLength
-
-    socket.emit("fileToPhone:init", file.name)
-
-    let offset = 0
-
-    // for (offset = 0; offset < length; offset += CHUNK_SIZE) {
-    //     socket.emit("fileToPhone:chunk", fileBuffer.slice(offset, offset + CHUNK_SIZE), file.name)
-    // }
-
-    let numChunksSent = 0;
-    const sendNextChunk = async () => {
-        if (offset < length) {
-            const chunk = fileBuffer.slice(offset, offset + CHUNK_SIZE);
-            socket?.emit("fileToPhone:chunk", chunk, file.name);
-            offset += CHUNK_SIZE;
-            numChunksSent++;
-
-            // Check if we've reached the maximum concurrent chunks
-            if (numChunksSent < MAX_CONCURRENT_CHUNKS) {
-                sendNextChunk(); // Send next chunk immediately
-            } else {
-                // Wait for the next event loop iteration to send another chunk
-                setTimeout(sendNextChunk, 0);
-            }
-        } else {
-            socket?.emit("fileToPhone:end", file.name);
-        }
-    };
-
-    sendNextChunk();
 }
 
 export function sendPing(message: string) {

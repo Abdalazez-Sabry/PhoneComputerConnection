@@ -5,7 +5,7 @@ interface SharedEvents {
     "request:phoneClipboard": (ack: (clipboard: string) => void) => void
     "request:computerClipboard": (ack: (clipboard: string) => void) => void
     "fileToPhone:init": (filename: string) => void
-    "fileToPhone:chunk": (chunk: Buffer | ArrayBuffer, filename: string) => void
+    "fileToPhone:chunk": (chunk: Buffer | ArrayBuffer, filename: string, ack: (status: "failed" | "success") => void) => void
     "fileToPhone:end": (fileName: string) => void
 }
 

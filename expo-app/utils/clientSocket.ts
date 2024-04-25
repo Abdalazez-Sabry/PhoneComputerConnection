@@ -2,15 +2,15 @@ import { io, Socket } from "socket.io-client";
 import { ClientToServerEvents, ServerToClientEvents } from "../../shared/socket.ioTypes"
 import * as Clipboard from 'expo-clipboard';
 import { IAlertContext } from "~/components/AlertSystem";
+import { DocumentPickerAsset } from "expo-document-picker";
 
 const PORT = "9500"
+const URL = `http://192.168.1.12:${PORT}`
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
 let alertContext: IAlertContext | null = null
 
-
 export function connectToWebSocket(setIsConnected: Function, alertContx: IAlertContext) {
-    const URL = `http://192.168.1.12:${PORT}`
     socket = io(URL)
     alertContext = alertContx
 
@@ -51,6 +51,35 @@ export async function copyClipboard() {
         title: "Copied clipboard",
         description: `Clipboard: ${clipboard}`
     })
+}
+
+export async function sendFile(file: DocumentPickerAsset) {
+    var fileData = {
+        uri: file.uri,
+        type: file.mimeType,
+        name: file.name,
+        size: file.size
+    };
+
+    const formData = new FormData();
+    formData.append('file', fileData as any);
+
+    const status = await fetch(`${URL}/upload`, {
+        body: formData,
+        method: "POST",
+    })
+
+    if (status.ok) {
+        alertContext?.add({
+            "title": `File:${file.name} sent successfully`,
+            "description": ""
+        })
+    } else {
+        alertContext?.add({
+            "title": `An error occurred trying to send file: ${file.name}`,
+            "description": ""
+        })
+    }
 }
 
 export function sendPing(message: string) {
