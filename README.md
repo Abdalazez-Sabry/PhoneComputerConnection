@@ -1,4 +1,4 @@
-###Phone Computer Connection
+### Phone Computer Connection
 
 The purpose of this project is to introduce me to react native, electron and websockets.
 
